@@ -10,7 +10,7 @@ cd <storage_directory>
 ```
 Then clone the repository with the following git command:
 ```bash
-git clone https://github(https://github.com/roryschram/EEE3096S
+git clone https://github.com/roryschram/EEE3096S.git
 ```
 To get the latest version of the main branch, run:
 
