@@ -55,12 +55,11 @@ char buffer[32];
 char buffer2[32];
 char buffer3[32];
 int LEDdelay = 1;
-uint32_t tick = 0;
-uint32_t previousTick = 0;
 //TO DO:
 //TASK 1
 //Create global variables for debouncing and delay interval
-
+uint32_t tick = 0;
+uint32_t previousTick = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,26 +137,24 @@ int main(void)
 	  //Complete rest of implementation
 
 
-	  uint32_t adc_val= pollADC();
+	  uint32_t adc_val= pollADC(); // Retrieve ADC's current level
 	  sprintf(buffer, "ADC: %d \r\n", adc_val);
-	  HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 1000);
+	  HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 1000); // Print to PuTTY
 
 
-	  int crr = ADCtoCRR(adc_val);
+	  int crr = ADCtoCRR(adc_val); // Convert ADC's level to corresponding CRR value
 	  sprintf(buffer2, "PWM: %d \r\n", crr);
-	  HAL_UART_Transmit(&huart2, buffer2, sizeof(buffer2), 1000);
+	  HAL_UART_Transmit(&huart2, buffer2, sizeof(buffer2), 1000); // Print to PuTTY
 
-	  sprintf(buffer3, "DC: %d %% \r\n\n", (crr*100) / 47999);
-	  HAL_UART_Transmit(&huart2, buffer3, sizeof(buffer3), 1000);
+	  sprintf(buffer3, "DC: %d %% \r\n\n", (crr*100) / 47999); // Calculate equivalent PWM from CRR
+	  HAL_UART_Transmit(&huart2, buffer3, sizeof(buffer3), 1000); // Print to PuTTY
 
-
-
-	  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, crr);
+	  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_4, crr); // PUT IN INTERRUPT
 
 
 
 
-	  HAL_Delay(500/LEDdelay); // wait for 500 ms
+	  HAL_Delay(500/LEDdelay); // Scaled by LEDdelay value to toggle between 500ms and 1000ms
 
     /* USER CODE END WHILE */
 
@@ -424,26 +421,20 @@ void EXTI0_1_IRQHandler(void)
 	//TO DO:
 	//TASK 1
 	//Switch delay frequency
-	tick = HAL_GetTick();
-	//sprintf(buffer, "%d \r\n", tick);
-	//HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 1000);
+	tick = HAL_GetTick(); // Current tick
 
-
-	if (tick - previousTick > 20)
+	if (tick - previousTick > 20) // Debounce detection
 	{
 		previousTick = tick;
 		if (LEDdelay == 1)
 			{
-				LEDdelay = 2;
+				LEDdelay = 2; // Change LED timer 500 --> 1000
 			} else {
-				LEDdelay = 1;
+				LEDdelay = 1; // Change LED timer 1000 --> 500
 			}
 
-		//sprintf(buffer, "%s \r\n", "toggled");
-		//HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 1000);
 	} else {
-		//sprintf(buffer, "%s \r\n", "not toggled");
-		//HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), 1000);
+		// This occurs when a debounce is detected
 	}
 
 	HAL_GPIO_EXTI_IRQHandler(B1_Pin); // Clear interrupt flags
@@ -453,10 +444,10 @@ uint32_t pollADC(void){
 	//TO DO:
 	//TASK 2
 	// Complete the function body
-	HAL_ADC_Start(&hadc);
-	HAL_ADC_GetValue(&hadc);
-	uint32_t val = HAL_ADC_GetValue(&hadc);
-	HAL_ADC_Stop(&hadc);
+	HAL_ADC_Start(&hadc); // Start ADC
+	//HAL_ADC_GetValue(&hadc); // Read from ADC
+	uint32_t val = HAL_ADC_GetValue(&hadc); // Read from ADC
+	HAL_ADC_Stop(&hadc); // Stop ADC
 	return val;
 }
 
@@ -467,14 +458,8 @@ uint32_t ADCtoCRR(uint32_t adc_val){
 	//HINT: The CRR value for 100% DC is 47999 (DC = CRR/ARR = CRR/47999)
 	//HINT: The ADC range is approx 0 - 4095
 	//HINT: Scale number from 0-4096 to 0 - 47999
-	int pwm = adc_val * (47999/4096);
+	int pwm = adc_val * (47999/4096); // Convert ADC level to CRR value
 
-
-
-
-	//uint32_t scaledCRR = (uint32_t) (47999 * dutyCycle);
-	//__HAL_TIM_SetCompare(htim3, TIM_CHANNEL_4, scaledCRR);
-	//uint32_t val = scaledCRR;
 	return (uint32_t)pwm;
 }
 
